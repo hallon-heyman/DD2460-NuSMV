@@ -1,0 +1,57 @@
+MODULE main
+VAR
+  location : array 0..3 of boolean;
+  traveling: array 0..3 of boolean;
+  carry: {0, 1, 2, 3, 4};
+  torch: boolean;
+  time: 0..100;
+
+ASSIGN
+  init (location[0]) := FALSE;
+  init (location[1]) := FALSE;
+  init (location[2]) := FALSE;
+  init (location[3]) := FALSE;
+  init (torch) := FALSE;
+  init (time) := 0;
+
+  next (torch) := case
+    -- rule: torch can only move if carried
+    traveling[0] | traveling[1] | traveling[2] | traveling[3]: !torch;
+    TRUE: torch;
+  esac;
+
+  next (location[0]) := case
+    -- rule: location changes if "0" is traveling
+    traveling[0] = torch: !location[0] & next(torch);
+    TRUE: location[0];
+  esac;
+
+  next (location[1]) := case
+    -- copy rule from above and change index
+    traveling[1] = torch: !location[1] & next(torch);
+    TRUE: location[1];
+  esac;
+
+  next (location[2]) := case
+    traveling[2] = torch: !location[2] & next(torch);
+    TRUE: location[2];
+  esac;
+
+  next (location[3]) := case
+    traveling[3] = torch: !location[3] & next(torch);
+    TRUE: location[3];
+  esac;
+
+  next(time) := case
+    time > 90: 90;
+    TRUE: time;
+  esac;
+
+
+LTLSPEC
+!((toint(traveling[0]) + toint(traveling[1]) + toint(traveling[2]) + toint(traveling[3]) <= 2 &
+  (traveling[0] -> location[0] = torch) &
+  (traveling[1] -> location[1] = torch) &
+  (traveling[2] -> location[2] = torch) &
+  (traveling[3] -> location[3] = torch))
+     U ( location[0] & location[1] & location[2] & location[3] & time <= 17));
